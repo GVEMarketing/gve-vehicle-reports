@@ -409,27 +409,6 @@
             align-items: center;
         }
         
-        .download-btn {
-            background: var(--color-primary);
-            color: #ffffff;
-            border: none;
-            padding: var(--space-sm) var(--space-md);
-            border-radius: 2rem;
-            font-size: var(--font-sm);
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-        }
-        
-        .download-btn:hover {
-            background: #e87a4a;
-            transform: translateY(-2px);
-        }
         
         .close-btn {
             background: transparent;
@@ -619,12 +598,6 @@
             <div class="modal-header">
                 <h3 class="modal-title" id="modalTitle">Vehicle Report</h3>
                 <div class="modal-actions">
-                    <button class="download-btn" onclick="downloadPDF()">
-                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
-                        </svg>
-                        Download PDF
-                    </button>
                     <button class="close-btn" onclick="closeModal()">&times;</button>
                 </div>
             </div>
@@ -937,81 +910,6 @@
             }
         }
         
-        // PDF Download Function - Simplified Working Version
-        async function downloadPDF() {
-            const btn = document.querySelector('.download-btn');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; margin: 0;"></div> Generating...';
-            btn.disabled = true;
-            
-            try {
-                // Option 1: Try using a web service (works across all browsers)
-                const reportUrl = new URL(currentReport, window.location.href).href;
-                const pdfServiceUrl = `https://api.pdflayer.com/api/convert?access_key=YOUR_KEY&document_url=${encodeURIComponent(reportUrl)}&page_size=A4`;
-                
-                // Since we don't have an API key, we'll use the browser's print function
-                // but with better implementation
-                
-                // Open report in new window
-                const printWindow = window.open(currentReport, '_blank', 'width=800,height=600');
-                
-                if (printWindow) {
-                    // Wait for window to load
-                    printWindow.onload = function() {
-                        // Add print styles to the new window
-                        const printStyles = printWindow.document.createElement('style');
-                        printStyles.textContent = `
-                            @media print {
-                                * {
-                                    -webkit-print-color-adjust: exact !important;
-                                    print-color-adjust: exact !important;
-                                }
-                                body {
-                                    margin: 0 !important;
-                                }
-                                .container {
-                                    width: 100% !important;
-                                    background: #0f1117 !important;
-                                }
-                                @page {
-                                    size: A4;
-                                    margin: 10mm;
-                                }
-                            }
-                        `;
-                        printWindow.document.head.appendChild(printStyles);
-                        
-                        // Trigger print after a short delay
-                        setTimeout(() => {
-                            printWindow.print();
-                        }, 500);
-                    };
-                    
-                    // Show instructions
-                    setTimeout(() => {
-                        alert('Print dialog opened in new window.\n\n✓ Select "Save as PDF"\n✓ Enable "Background graphics"\n✓ Set margins to "Default" or "None"\n✓ Click Save\n\nThe report window will close automatically after printing.');
-                    }, 100);
-                    
-                } else {
-                    throw new Error('Could not open print window');
-                }
-                
-            } catch (error) {
-                console.error('PDF generation error:', error);
-                
-                // Fallback: Direct link to report
-                const link = document.createElement('a');
-                link.href = currentReport;
-                link.target = '_blank';
-                link.click();
-                
-                alert('Report opened in new tab.\n\nTo save as PDF:\n1. Press Ctrl/Cmd + P\n2. Select "Save as PDF"\n3. Enable "Background graphics"\n4. Click Save');
-                
-            } finally {
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
         
         // Handle ESC key to close modal
         document.addEventListener('keydown', (e) => {
