@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GVE London - Vehicle Performance Dashboard</title>
+    <title>GVE London - Supercar Portfolio Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -482,9 +482,28 @@
         
         /* Media Queries for fine-tuning */
         @media (max-width: 768px) {
+            /* Smaller mobile header */
+            .header {
+                padding: var(--space-md) 0;
+            }
+            
+            .logo {
+                height: clamp(1.5rem, 4vw, 2rem);
+            }
+            
+            .header-title {
+                font-size: clamp(1.1rem, 3vw, 1.5rem);
+                margin-bottom: 0.25rem;
+            }
+            
+            .header-subtitle {
+                font-size: clamp(0.65rem, 1.5vw, 0.75rem);
+            }
+            
             .header-content {
                 justify-content: center;
                 text-align: center;
+                gap: var(--space-sm);
             }
             
             .header-info {
@@ -537,7 +556,7 @@
             <div class="header-content">
                 <img src="gve.londonno-background.png" alt="GVE London" class="logo">
                 <div class="header-info">
-                    <h1 class="header-title">Vehicle Performance Dashboard</h1>
+                    <h1 class="header-title">Supercar Portfolio Dashboard</h1>
                     <p class="header-subtitle">Confidential Report • August 2025</p>
                 </div>
             </div>
@@ -639,7 +658,7 @@
                     brand: 'Audi',
                     model: 'A8 L',
                     registration: 'KV68NHX',
-                    price: '£34,900',
+                    price: '£24,900',
                     profit: '£4,000',
                     status: 'SOLD',
                     mileage: '51,102 miles',
@@ -651,7 +670,7 @@
                     brand: 'Lamborghini',
                     model: 'Huracan Spyder',
                     registration: 'YH51CAN',
-                    price: '£174,900',
+                    price: '£199,900',
                     profit: 'RE-PICTURE',
                     status: 'UPDATING',
                     mileage: '22,102 miles',
@@ -918,7 +937,7 @@
             }
         }
         
-        // Improved PDF Download Function
+        // PDF Download Function - Simplified Working Version
         async function downloadPDF() {
             const btn = document.querySelector('.download-btn');
             const originalHTML = btn.innerHTML;
@@ -926,100 +945,68 @@
             btn.disabled = true;
             
             try {
-                // Create a temporary container
-                const tempContainer = document.createElement('div');
-                tempContainer.style.position = 'fixed';
-                tempContainer.style.left = '-9999px';
-                tempContainer.style.width = '210mm';
-                tempContainer.style.height = '297mm';
-                tempContainer.style.background = 'white';
-                document.body.appendChild(tempContainer);
+                // Option 1: Try using a web service (works across all browsers)
+                const reportUrl = new URL(currentReport, window.location.href).href;
+                const pdfServiceUrl = `https://api.pdflayer.com/api/convert?access_key=YOUR_KEY&document_url=${encodeURIComponent(reportUrl)}&page_size=A4`;
                 
-                // Load the report content via fetch
-                const response = await fetch(currentReport);
-                const html = await response.text();
+                // Since we don't have an API key, we'll use the browser's print function
+                // but with better implementation
                 
-                // Parse and inject the content
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const reportContent = doc.querySelector('.container');
+                // Open report in new window
+                const printWindow = window.open(currentReport, '_blank', 'width=800,height=600');
                 
-                if (reportContent) {
-                    // Clone the content to avoid modifying the original
-                    const clonedContent = reportContent.cloneNode(true);
-                    
-                    // Fix image paths
-                    const images = clonedContent.querySelectorAll('img');
-                    images.forEach(img => {
-                        if (!img.src.startsWith('http')) {
-                            img.src = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '') + img.getAttribute('src');
-                        }
-                    });
-                    
-                    tempContainer.appendChild(clonedContent);
-                    
-                    // Wait for images to load
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    // Generate canvas with better options
-                    const canvas = await html2canvas(clonedContent, {
-                        scale: 2,
-                        backgroundColor: '#0f1117',
-                        logging: false,
-                        useCORS: true,
-                        allowTaint: true,
-                        imageTimeout: 5000,
-                        onclone: (clonedDoc) => {
-                            // Ensure styles are applied
-                            const clonedElement = clonedDoc.querySelector('.container');
-                            if (clonedElement) {
-                                clonedElement.style.width = '210mm';
-                                clonedElement.style.maxWidth = '210mm';
+                if (printWindow) {
+                    // Wait for window to load
+                    printWindow.onload = function() {
+                        // Add print styles to the new window
+                        const printStyles = printWindow.document.createElement('style');
+                        printStyles.textContent = `
+                            @media print {
+                                * {
+                                    -webkit-print-color-adjust: exact !important;
+                                    print-color-adjust: exact !important;
+                                }
+                                body {
+                                    margin: 0 !important;
+                                }
+                                .container {
+                                    width: 100% !important;
+                                    background: #0f1117 !important;
+                                }
+                                @page {
+                                    size: A4;
+                                    margin: 10mm;
+                                }
                             }
-                        }
-                    });
+                        `;
+                        printWindow.document.head.appendChild(printStyles);
+                        
+                        // Trigger print after a short delay
+                        setTimeout(() => {
+                            printWindow.print();
+                        }, 500);
+                    };
                     
-                    // Generate PDF
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'a4'
-                    });
-                    
-                    const imgWidth = 210;
-                    const pageHeight = 297;
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                    let heightLeft = imgHeight;
-                    let position = 0;
-                    
-                    const imgData = canvas.toDataURL('image/png');
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                    
-                    // Add pages if content is longer than one page
-                    while (heightLeft >= 0) {
-                        position = heightLeft - imgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                        heightLeft -= pageHeight;
-                    }
-                    
-                    // Save PDF
-                    const date = new Date().toISOString().slice(0, 10);
-                    const filename = `${currentVehicleName.replace(/\s+/g, '-').toLowerCase()}-report-${date}.pdf`;
-                    pdf.save(filename);
+                    // Show instructions
+                    setTimeout(() => {
+                        alert('Print dialog opened in new window.\n\n✓ Select "Save as PDF"\n✓ Enable "Background graphics"\n✓ Set margins to "Default" or "None"\n✓ Click Save\n\nThe report window will close automatically after printing.');
+                    }, 100);
                     
                 } else {
-                    throw new Error('Report content not found');
+                    throw new Error('Could not open print window');
                 }
-                
-                // Clean up
-                document.body.removeChild(tempContainer);
                 
             } catch (error) {
                 console.error('PDF generation error:', error);
-                alert('Unable to generate PDF. Please try using your browser\'s print function (Ctrl/Cmd + P) and save as PDF.');
+                
+                // Fallback: Direct link to report
+                const link = document.createElement('a');
+                link.href = currentReport;
+                link.target = '_blank';
+                link.click();
+                
+                alert('Report opened in new tab.\n\nTo save as PDF:\n1. Press Ctrl/Cmd + P\n2. Select "Save as PDF"\n3. Enable "Background graphics"\n4. Click Save');
+                
             } finally {
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
