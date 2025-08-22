@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GVE London - Vehicle Performance Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* CSS Reset and Variables */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Dynamic spacing using viewport units */
+            --space-xs: clamp(0.5rem, 1vw, 0.75rem);
+            --space-sm: clamp(0.75rem, 1.5vw, 1rem);
+            --space-md: clamp(1rem, 2vw, 1.5rem);
+            --space-lg: clamp(1.5rem, 3vw, 2.5rem);
+            --space-xl: clamp(2rem, 4vw, 4rem);
+            
+            /* Fluid typography */
+            --font-xs: clamp(0.7rem, 1.5vw, 0.75rem);
+            --font-sm: clamp(0.8rem, 1.8vw, 0.875rem);
+            --font-base: clamp(0.9rem, 2vw, 1rem);
+            --font-md: clamp(1rem, 2.5vw, 1.25rem);
+            --font-lg: clamp(1.2rem, 3vw, 1.5rem);
+            --font-xl: clamp(1.5rem, 4vw, 2rem);
+            --font-2xl: clamp(2rem, 5vw, 3rem);
+            --font-3xl: clamp(2.5rem, 6vw, 4rem);
+            
+            /* Colors */
+            --color-primary: #cd642f;
+            --color-dark: #181c24;
+            --color-darker: #0f1117;
+            --color-darkest: #0a0a0a;
+            --color-success: #4CAF50;
+            --color-info: #2196F3;
+            --color-classic: #9C27B0;
+            
+            /* Dynamic border radius */
+            --radius-sm: clamp(0.5rem, 1vw, 0.75rem);
+            --radius-md: clamp(0.75rem, 1.5vw, 1rem);
+            --radius-lg: clamp(1rem, 2vw, 1.5rem);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--color-darkest);
+            color: #ffffff;
+            line-height: 1.6;
+            font-size: var(--font-base);
+            overflow-x: hidden;
+        }
+        
+        /* Fluid Container */
+        .container {
+            width: 100%;
+            max-width: min(1400px, 95vw);
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+        }
+        
+        /* Dynamic Header */
+        .header {
+            background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-darker) 100%);
+            padding: var(--space-lg) 0;
+            border-bottom: 2px solid var(--color-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            height: clamp(2rem, 5vw, 3rem);
+            width: auto;
+        }
+        
+        .header-info {
+            text-align: right;
+        }
+        
+        .header-title {
+            font-size: var(--font-2xl);
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-xs);
+        }
+        
+        .header-subtitle {
+            font-size: var(--font-sm);
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: var(--space-xl) 0;
+        }
+        
+        /* Section Headers */
+        .section {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--space-lg);
+            gap: var(--space-md);
+        }
+        
+        .section-title {
+            font-size: var(--font-xl);
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            position: relative;
+            padding-bottom: var(--space-sm);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: clamp(3rem, 10vw, 5rem);
+            height: 3px;
+            background: var(--color-primary);
+        }
+        
+        .section-count {
+            background: rgba(205, 100, 47, 0.2);
+            padding: var(--space-xs) var(--space-md);
+            border-radius: 2rem;
+            font-size: var(--font-sm);
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Dynamic Grid Layout */
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+            gap: var(--space-lg);
+        }
+        
+        /* Vehicle Card */
+        .vehicle-card {
+            background: var(--color-darker);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            container-type: inline-size;
+        }
+        
+        .vehicle-card:hover {
+            transform: translateY(-0.5rem);
+            border-color: var(--color-primary);
+            box-shadow: 0 1.5rem 3rem rgba(205, 100, 47, 0.2);
+        }
+        
+        .card-image {
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+        
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .vehicle-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+        
+        .card-status {
+            position: absolute;
+            top: var(--space-sm);
+            right: var(--space-sm);
+            padding: var(--space-xs) var(--space-md);
+            border-radius: 2rem;
+            font-size: var(--font-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+        
+        .status-sold {
+            background: rgba(76, 175, 80, 0.9);
+            color: #ffffff;
+        }
+        
+        .status-investment {
+            background: rgba(33, 150, 243, 0.9);
+            color: #ffffff;
+        }
+        
+        .status-updating {
+            background: rgba(255, 152, 0, 0.9);
+            color: #ffffff;
+        }
+        
+        .card-content {
+            padding: var(--space-lg);
+        }
+        
+        .card-brand {
+            font-size: var(--font-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            margin-bottom: var(--space-xs);
+        }
+        
+        .card-model {
+            font-size: var(--font-lg);
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+            line-height: 1.2;
+        }
+        
+        /* Container query for card content */
+        @container (min-width: 400px) {
+            .card-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .card-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
+        
+        .detail-label {
+            font-size: var(--font-xs);
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 0.05em;
+        }
+        
+        .detail-value {
+            font-size: var(--font-md);
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .detail-value.price {
+            color: var(--color-primary);
+        }
+        
+        .detail-value.profit {
+            color: var(--color-success);
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .view-report-btn {
+            font-size: var(--font-sm);
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            transition: gap 0.3s ease;
+        }
+        
+        .view-report-btn:hover {
+            gap: var(--space-sm);
+        }
+        
+        .card-reg {
+            font-size: var(--font-sm);
+            color: #888;
+            font-weight: 500;
+        }
+        
+        /* Summary Section */
+        .summary-section {
+            background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-darker) 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            margin-bottom: var(--space-xl);
+            border: 1px solid rgba(205, 100, 47, 0.2);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+            gap: var(--space-lg);
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: var(--font-2xl);
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .summary-label {
+            font-size: var(--font-sm);
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            overflow: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            width: min(95%, 1200px);
+            height: min(90vh, 900px);
+            background: var(--color-darker);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            background: var(--color-dark);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+        
+        .modal-title {
+            font-size: var(--font-lg);
+            font-weight: 600;
+            color: #ffffff;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+        }
+        
+        .download-btn {
+            background: var(--color-primary);
+            color: #ffffff;
+            border: none;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: 2rem;
+            font-size: var(--font-sm);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        
+        .download-btn:hover {
+            background: #e87a4a;
+            transform: translateY(-2px);
+        }
+        
+        .close-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            width: clamp(2.5rem, 5vw, 3rem);
+            height: clamp(2.5rem, 5vw, 3rem);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: var(--font-lg);
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #ffffff;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            background: var(--color-darker);
+            position: relative;
+        }
+        
+        .report-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Media Queries for fine-tuning */
+        @media (max-width: 768px) {
+            .header-content {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .header-info {
+                text-align: center;
+            }
+            
+            .section-header {
+                flex-wrap: wrap;
+            }
+            
+            .section-line {
+                display: none;
+            }
+            
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+            }
+            
+            .modal.active {
+                align-items: stretch;
+            }
+        }
+        
+        @media (hover: none) {
+            /* Touch device optimizations */
+            .vehicle-card:active {
+                transform: scale(0.98);
+            }
+            
+            .vehicle-card:hover {
+                transform: none;
+            }
+        }
+        
+        /* Hidden iframe for PDF */
+        .pdf-container {
+            position: fixed;
+            left: -9999px;
+            width: 210mm;
+            height: 297mm;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <img src="gve.londonno-background.png" alt="GVE London" class="logo">
+                <div class="header-info">
+                    <h1 class="header-title">Vehicle Performance Dashboard</h1>
+                    <p class="header-subtitle">Confidential Report • August 2025</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="container">
+            <!-- Summary Section -->
+            <div class="summary-section">
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-value">9</div>
+                        <div class="summary-label">Total Vehicles</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">5</div>
+                        <div class="summary-label">Completed Sales</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">£49K</div>
+                        <div class="summary-label">Total Profit</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">£66K</div>
+                        <div class="summary-label">Investment Potential</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Completed Sales Section -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Completed Sales</h2>
+                    <span class="section-count">5 Vehicles</span>
+                    <div class="section-line"></div>
+                </div>
+                <div class="vehicle-grid" id="completedSalesGrid">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+            </section>
+            
+            <!-- Investment Opportunities Section -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Investment Opportunities</h2>
+                    <span class="section-count">4 Vehicles</span>
+                    <div class="section-line"></div>
+                </div>
+                <div class="vehicle-grid" id="investmentGrid">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <!-- Modal -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Vehicle Report</h3>
+                <div class="modal-actions">
+                    <button class="download-btn" onclick="downloadPDF()">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+                        </svg>
+                        Download PDF
+                    </button>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <iframe id="reportFrame" class="report-frame"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden container for PDF generation -->
+    <div class="pdf-container" id="pdfContainer"></div>
+    
+    <script>
+        // Vehicle data
+        const vehicles = {
+            completedSales: [
+                {
+                    id: 'lamborghini-urus-78slr',
+                    brand: 'Lamborghini',
+                    model: 'Urus',
+                    registration: '78SLR',
+                    price: '£174,900',
+                    profit: '£15,000',
+                    status: 'SOLD',
+                    mileage: '8,204 miles',
+                    reportFile: 'lamborghini-urus-78slr-report-final-v3.html',
+                    image: 'DSC06487-Edit-2-1024x576.jpg'
+                },
+                {
+                    id: 'audi-a8-kv68nhx',
+                    brand: 'Audi',
+                    model: 'A8 L',
+                    registration: 'KV68NHX',
+                    price: '£34,900',
+                    profit: '£4,000',
+                    status: 'SOLD',
+                    mileage: '51,102 miles',
+                    reportFile: 'audi-a8-kv68nhx-report.html',
+                    image: 'audi-a8-kv68nhx.jpg.jpg'
+                },
+                {
+                    id: 'lamborghini-spyder-yh51can',
+                    brand: 'Lamborghini',
+                    model: 'Huracan Spyder',
+                    registration: 'YH51CAN',
+                    price: '£174,900',
+                    profit: 'RE-PICTURE',
+                    status: 'UPDATING',
+                    mileage: '22,102 miles',
+                    reportFile: 'lamborghini-spyder-yh51can-report.html',
+                    image: 'DSC04305-Edit-1024x686.jpg'
+                },
+                {
+                    id: 'rolls-royce-dawn-bl18vbz',
+                    brand: 'Rolls-Royce',
+                    model: 'Dawn',
+                    registration: 'BL18VBZ',
+                    price: '£159,900',
+                    profit: '£10,000',
+                    status: 'SOLD + P/X',
+                    mileage: '15,011 miles',
+                    reportFile: 'rolls-royce-dawn-bl18vbz-report.html',
+                    image: 'DSC02591-Edit-Copy-1024x683.jpg'
+                },
+                {
+                    id: 'mclaren-570s-sf66bjo',
+                    brand: 'McLaren',
+                    model: '570S',
+                    registration: 'SF66BJO',
+                    price: '£79,900',
+                    profit: '£10,000',
+                    status: 'SOLD',
+                    mileage: '30,415 miles',
+                    reportFile: 'mclaren-570s-sf66bjo-report.html',
+                    image: 'MCLAREN-570S-ORANGE-GREY-JUL25-1-1024x576.jpg'
+                }
+            ],
+            investments: [
+                {
+                    id: 'porsche-911-gt3-g7jjo',
+                    brand: 'Porsche',
+                    model: '911 GT3',
+                    registration: 'G7JJO',
+                    price: '£149,900',
+                    profit: '£20,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£129,900',
+                    reportFile: 'porsche-911-gt3-g7jjo-report.html',
+                    image: 'PORSCHE-GT3-BLUE-JULY25-10-1024x682.jpg'
+                },
+                {
+                    id: 'aston-martin-db11-ykz322',
+                    brand: 'Aston Martin',
+                    model: 'DB11 V12',
+                    registration: 'YKZ322',
+                    price: '£67,900',
+                    profit: '£11,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£56,900',
+                    reportFile: 'aston-martin-db11-ykz322-report.html',
+                    image: 'DSC04594-Edit-2-1-1024x576.jpg'
+                },
+                {
+                    id: 'mercedes-g63-lc69jwo',
+                    brand: 'Mercedes-AMG',
+                    model: 'G63',
+                    registration: 'LC69JWO',
+                    price: '£129,900',
+                    profit: '£15,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£114,900',
+                    reportFile: 'mercedes-g63-lc69jwo-report.html',
+                    image: '9-16-1024x689.jpg'
+                },
+                {
+                    id: 'mercedes-pagoda-fma442f',
+                    brand: 'Mercedes-Benz',
+                    model: '280 SL Pagoda',
+                    registration: 'FMA442F',
+                    price: '£69,900',
+                    profit: '£20,000',
+                    status: 'CLASSIC',
+                    purchasePrice: '£49,900',
+                    reportFile: 'mercedes-280sl-pagoda-fma442f-report.html',
+                    image: 'DSC03650-Edit-1024x576.jpeg'
+                }
+            ]
+        };
+        
+        let currentReport = '';
+        let currentVehicleName = '';
+        
+        // Create vehicle card HTML
+        function createVehicleCard(vehicle, type) {
+            const statusClass = type === 'completed' ? 
+                (vehicle.status === 'UPDATING' ? 'status-updating' : 'status-sold') : 
+                'status-investment';
+            const profitLabel = type === 'completed' ? 'Profit' : 'Potential Profit';
+            
+            return `
+                <div class="vehicle-card" onclick="openReport('${vehicle.reportFile}', '${vehicle.brand} ${vehicle.model}')">
+                    <div class="card-image">
+                        <img src="${vehicle.image}" alt="${vehicle.brand} ${vehicle.model}" loading="lazy">
+                        <span class="card-status ${statusClass}">${vehicle.status}</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-brand">${vehicle.brand}</div>
+                        <h3 class="card-model">${vehicle.model}</h3>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <span class="detail-label">List Price</span>
+                                <span class="detail-value price">${vehicle.price}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">${profitLabel}</span>
+                                <span class="detail-value profit">${vehicle.profit}</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-reg">${vehicle.registration}</span>
+                            <span class="view-report-btn">
+                                View Report 
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Initialize vehicle grids
+        function initializeGrids() {
+            const completedGrid = document.getElementById('completedSalesGrid');
+            const investmentGrid = document.getElementById('investmentGrid');
+            
+            // Populate completed sales
+            completedGrid.innerHTML = vehicles.completedSales
+                .map(vehicle => createVehicleCard(vehicle, 'completed'))
+                .join('');
+            
+            // Populate investments
+            investmentGrid.innerHTML = vehicles.investments
+                .map(vehicle => createVehicleCard(vehicle, 'investment'))
+                .join('');
+        }
+        
+        // Open report in modal
+        function openReport(reportFile, vehicleName) {
+            currentReport = reportFile;
+            currentVehicleName = vehicleName;
+            
+            const modal = document.getElementById('reportModal');
+            const frame = document.getElementById('reportFrame');
+            const title = document.getElementById('modalTitle');
+            
+            title.textContent = vehicleName + ' - Performance Report';
+            frame.src = reportFile;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Apply responsive fixes after load
+            frame.onload = function() {
+                applyResponsiveFixes();
+            };
+        }
+        
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('reportModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Clear iframe
+            setTimeout(() => {
+                document.getElementById('reportFrame').src = '';
+            }, 300);
+        }
+        
+        // Apply responsive fixes to iframe content
+        function applyResponsiveFixes() {
+            const frame = document.getElementById('reportFrame');
+            try {
+                const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (!iframeDoc) return;
+                
+                // Inject responsive CSS
+                const responsiveStyle = document.createElement('style');
+                responsiveStyle.innerHTML = `
+                    /* Dynamic responsive styles for reports */
+                    * {
+                        box-sizing: border-box;
+                    }
+                    
+                    html, body {
+                        overflow-x: hidden;
+                        width: 100%;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    
+                    .container {
+                        width: 100%;
+                        max-width: 100vw;
+                        margin: 0;
+                        padding: clamp(1rem, 3vw, 2rem);
+                        overflow-x: hidden;
+                    }
+                    
+                    /* Dynamic typography */
+                    .vehicle-title {
+                        font-size: clamp(1.5rem, 4vw, 3rem) !important;
+                    }
+                    
+                    .vehicle-model {
+                        font-size: clamp(2rem, 5vw, 3.75rem) !important;
+                    }
+                    
+                    .metric-number {
+                        font-size: clamp(1.5rem, 3vw, 2rem) !important;
+                    }
+                    
+                    /* Responsive grid layouts */
+                    @media (max-width: 768px) {
+                        .vehicle-showcase {
+                            grid-template-columns: 1fr !important;
+                        }
+                        
+                        .metrics-row {
+                            grid-template-columns: repeat(2, 1fr) !important;
+                        }
+                        
+                        .two-column {
+                            grid-template-columns: 1fr !important;
+                        }
+                        
+                        .vehicle-specs-grid {
+                            grid-template-columns: repeat(2, 1fr) !important;
+                        }
+                    }
+                    
+                    /* Fluid spacing */
+                    .header,
+                    .content-wrapper,
+                    .footer {
+                        padding: clamp(1rem, 3vw, 3rem) !important;
+                    }
+                    
+                    .strategy-box,
+                    .performance-section,
+                    .insights-section {
+                        padding: clamp(1.5rem, 3vw, 2.5rem) !important;
+                    }
+                    
+                    /* Responsive images */
+                    .vehicle-image img {
+                        width: 100%;
+                        height: auto;
+                        max-width: 100%;
+                    }
+                `;
+                
+                if (iframeDoc.head) {
+                    iframeDoc.head.appendChild(responsiveStyle);
+                }
+            } catch (e) {
+                console.warn('Could not apply responsive fixes to iframe:', e);
+            }
+        }
+        
+        // Improved PDF Download Function
+        async function downloadPDF() {
+            const btn = document.querySelector('.download-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; margin: 0;"></div> Generating...';
+            btn.disabled = true;
+            
+            try {
+                // Create a temporary container
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'fixed';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.width = '210mm';
+                tempContainer.style.height = '297mm';
+                tempContainer.style.background = 'white';
+                document.body.appendChild(tempContainer);
+                
+                // Load the report content via fetch
+                const response = await fetch(currentReport);
+                const html = await response.text();
+                
+                // Parse and inject the content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const reportContent = doc.querySelector('.container');
+                
+                if (reportContent) {
+                    // Clone the content to avoid modifying the original
+                    const clonedContent = reportContent.cloneNode(true);
+                    
+                    // Fix image paths
+                    const images = clonedContent.querySelectorAll('img');
+                    images.forEach(img => {
+                        if (!img.src.startsWith('http')) {
+                            img.src = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '') + img.getAttribute('src');
+                        }
+                    });
+                    
+                    tempContainer.appendChild(clonedContent);
+                    
+                    // Wait for images to load
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Generate canvas with better options
+                    const canvas = await html2canvas(clonedContent, {
+                        scale: 2,
+                        backgroundColor: '#0f1117',
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: true,
+                        imageTimeout: 5000,
+                        onclone: (clonedDoc) => {
+                            // Ensure styles are applied
+                            const clonedElement = clonedDoc.querySelector('.container');
+                            if (clonedElement) {
+                                clonedElement.style.width = '210mm';
+                                clonedElement.style.maxWidth = '210mm';
+                            }
+                        }
+                    });
+                    
+                    // Generate PDF
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgWidth = 210;
+                    const pageHeight = 297;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                    
+                    // Add pages if content is longer than one page
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                    
+                    // Save PDF
+                    const date = new Date().toISOString().slice(0, 10);
+                    const filename = `${currentVehicleName.replace(/\s+/g, '-').toLowerCase()}-report-${date}.pdf`;
+                    pdf.save(filename);
+                    
+                } else {
+                    throw new Error('Report content not found');
+                }
+                
+                // Clean up
+                document.body.removeChild(tempContainer);
+                
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                alert('Unable to generate PDF. Please try using your browser\'s print function (Ctrl/Cmd + P) and save as PDF.');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+        
+        // Handle ESC key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Close modal on background click
+        document.getElementById('reportModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeGrids);
+        
+        // Handle resize events for dynamic adjustments
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // Re-apply fixes if modal is open
+                if (document.getElementById('reportModal').classList.contains('active')) {
+                    applyResponsiveFixes();
+                }
+            }, 250);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GVE London - Vehicle Performance Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.4;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #181c24 0%, #0f1117 100%);
+            padding: 30px 40px;
+            border-bottom: 2px solid #cd642f;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .logo {
+            height: 50px;
+        }
+        
+        .header-info {
+            text-align: right;
+        }
+        
+        .header-title {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            color: #cd642f;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Section Headers */
+        .section {
+            margin-bottom: 60px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #ffffff;
+            padding-right: 30px;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 60px;
+            height: 3px;
+            background: #cd642f;
+        }
+        
+        .section-count {
+            background: rgba(205, 100, 47, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #cd642f;
+            font-weight: 600;
+        }
+        
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-left: 20px;
+        }
+        
+        /* Vehicle Grid */
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        
+        /* Vehicle Card */
+        .vehicle-card {
+            background: #0f1117;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            border-color: #cd642f;
+            box-shadow: 0 20px 40px rgba(205, 100, 47, 0.2);
+        }
+        
+        .vehicle-card:hover .card-image img {
+            transform: scale(1.05);
+        }
+        
+        .card-image {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+        
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .card-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-sold {
+            background: rgba(76, 175, 80, 0.9);
+            color: #ffffff;
+        }
+        
+        .status-investment {
+            background: rgba(33, 150, 243, 0.9);
+            color: #ffffff;
+        }
+        
+        .card-content {
+            padding: 25px;
+        }
+        
+        .card-brand {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .card-model {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .card-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .detail-value.price {
+            color: #cd642f;
+        }
+        
+        .detail-value.profit {
+            color: #4CAF50;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .view-report-btn {
+            font-size: 14px;
+            color: #cd642f;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: gap 0.3s ease;
+        }
+        
+        .view-report-btn:hover {
+            gap: 12px;
+        }
+        
+        .card-reg {
+            font-size: 14px;
+            color: #888;
+            font-weight: 500;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            overflow: auto;
+            backdrop-filter: blur(10px);
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            background: #0f1117;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            background: #181c24;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .download-btn {
+            background: #cd642f;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn:hover {
+            background: #e87a4a;
+            transform: translateY(-2px);
+        }
+        
+        .close-btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #ffffff;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            background: #0f1117;
+        }
+        
+        .report-frame {
+            width: 100%;
+            height: 800px;
+            border: none;
+            display: block;
+        }
+        
+        /* Summary Stats */
+        .summary-section {
+            background: linear-gradient(135deg, #181c24 0%, #0f1117 100%);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 60px;
+            border: 1px solid rgba(205, 100, 47, 0.2);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #cd642f;
+            margin-bottom: 5px;
+        }
+        
+        .summary-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 1px;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #cd642f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 15px;
+                position: relative;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .header-info {
+                text-align: center;
+            }
+            
+            .logo {
+                height: 35px;
+            }
+            
+            .header-title {
+                font-size: 20px;
+                letter-spacing: 1px;
+            }
+            
+            .header-subtitle {
+                font-size: 12px;
+            }
+            
+            .main-container {
+                padding: 20px 10px;
+            }
+            
+            .section {
+                margin-bottom: 40px;
+            }
+            
+            .section-header {
+                margin-bottom: 20px;
+            }
+            
+            .section-title {
+                font-size: 18px;
+                padding-right: 15px;
+            }
+            
+            .section-title::after {
+                width: 40px;
+                height: 2px;
+            }
+            
+            .section-count {
+                font-size: 12px;
+                padding: 4px 12px;
+            }
+            
+            .section-line {
+                display: none;
+            }
+            
+            .vehicle-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .vehicle-card {
+                border-radius: 15px;
+            }
+            
+            .card-image {
+                height: 160px;
+            }
+            
+            .card-status {
+                top: 10px;
+                right: 10px;
+                font-size: 10px;
+                padding: 6px 12px;
+            }
+            
+            .card-content {
+                padding: 20px;
+            }
+            
+            .card-brand {
+                font-size: 11px;
+            }
+            
+            .card-model {
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+            
+            .card-details {
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .detail-label {
+                font-size: 10px;
+            }
+            
+            .detail-value {
+                font-size: 14px;
+            }
+            
+            .card-footer {
+                padding-top: 15px;
+            }
+            
+            .view-report-btn {
+                font-size: 12px;
+                gap: 6px;
+            }
+            
+            .card-reg {
+                font-size: 12px;
+            }
+            
+            .summary-section {
+                padding: 25px 20px;
+                margin-bottom: 40px;
+                border-radius: 15px;
+            }
+            
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .summary-value {
+                font-size: 24px;
+            }
+            
+            .summary-label {
+                font-size: 11px;
+            }
+            
+            .modal {
+                padding: 0;
+            }
+            
+            .modal-content {
+                width: 100%;
+                height: 100%;
+                max-height: 100vh;
+                border-radius: 0;
+                margin: 0;
+            }
+            
+            .modal-header {
+                padding: 15px;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: #181c24;
+            }
+            
+            .modal-title {
+                font-size: 14px;
+                line-height: 1.3;
+            }
+            
+            .modal-actions {
+                gap: 10px;
+            }
+            
+            .download-btn {
+                padding: 8px 12px;
+                font-size: 11px;
+                gap: 6px;
+            }
+            
+            .download-btn svg {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .close-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+            
+            .modal-body {
+                height: calc(100vh - 70px);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .report-frame {
+                height: 100%;
+                min-height: 100vh;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Hidden iframe for PDF */
+        .pdf-frame {
+            position: absolute;
+            left: -9999px;
+            width: 210mm;
+            height: 297mm;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <img src="gve.londonno-background.png" alt="GVE London" class="logo">
+            <div class="header-info">
+                <h1 class="header-title">Vehicle Performance Dashboard</h1>
+                <p class="header-subtitle">Confidential Report • August 2025</p>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main-container">
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value">9</div>
+                    <div class="summary-label">Total Vehicles</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">5</div>
+                    <div class="summary-label">Completed Sales</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">£49K</div>
+                    <div class="summary-label">Total Profit</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">£66K</div>
+                    <div class="summary-label">Investment Potential</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Completed Sales Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Completed Sales</h2>
+                <span class="section-count">5 Vehicles</span>
+                <div class="section-line"></div>
+            </div>
+            <div class="vehicle-grid" id="completedSalesGrid">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
+        </section>
+        
+        <!-- Investment Opportunities Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Investment Opportunities</h2>
+                <span class="section-count">4 Vehicles</span>
+                <div class="section-line"></div>
+            </div>
+            <div class="vehicle-grid" id="investmentGrid">
+                <!-- Cards will be dynamically inserted here -->
+            </div>
+        </section>
+    </main>
+    
+    <!-- Modal -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Vehicle Report</h3>
+                <div class="modal-actions">
+                    <button class="download-btn" onclick="downloadPDF()">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+                        </svg>
+                        Download PDF
+                    </button>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <iframe id="reportFrame" class="report-frame"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden iframe for PDF -->
+    <iframe id="pdfFrame" class="pdf-frame"></iframe>
+    
+    <script>
+        // Vehicle data
+        const vehicles = {
+            completedSales: [
+                {
+                    id: 'lamborghini-urus-78slr',
+                    brand: 'Lamborghini',
+                    model: 'Urus',
+                    registration: '78SLR',
+                    price: '£174,900',
+                    profit: '£15,000',
+                    status: 'SOLD',
+                    mileage: '8,204 miles',
+                    reportFile: 'lamborghini-urus-78slr-report-final-v3.html',
+                    image: 'DSC06487-Edit-2-1024x576.jpg'
+                },
+                {
+                    id: 'audi-a8-kv68nhx',
+                    brand: 'Audi',
+                    model: 'A8 L',
+                    registration: 'KV68NHX',
+                    price: '£34,900',
+                    profit: '£4,000',
+                    status: 'SOLD',
+                    mileage: '51,102 miles',
+                    reportFile: 'audi-a8-kv68nhx-report.html',
+                    image: 'audi-a8-kv68nhx.jpg.jpg'
+                },
+                {
+                    id: 'lamborghini-spyder-yh51can',
+                    brand: 'Lamborghini',
+                    model: 'Huracan Spyder',
+                    registration: 'YH51CAN',
+                    price: '£174,900',
+                    profit: 'RE-PICTURE',
+                    status: 'UPDATING',
+                    mileage: '22,102 miles',
+                    reportFile: 'lamborghini-spyder-yh51can-report.html',
+                    image: 'DSC04305-Edit-1024x686.jpg'
+                },
+                {
+                    id: 'rolls-royce-dawn-bl18vbz',
+                    brand: 'Rolls-Royce',
+                    model: 'Dawn',
+                    registration: 'BL18VBZ',
+                    price: '£159,900',
+                    profit: '£10,000',
+                    status: 'SOLD + P/X',
+                    mileage: '15,011 miles',
+                    reportFile: 'rolls-royce-dawn-bl18vbz-report.html',
+                    image: 'DSC02591-Edit-Copy-1024x683.jpg'
+                },
+                {
+                    id: 'mclaren-570s-sf66bjo',
+                    brand: 'McLaren',
+                    model: '570S',
+                    registration: 'SF66BJO',
+                    price: '£79,900',
+                    profit: '£10,000',
+                    status: 'SOLD',
+                    mileage: '30,415 miles',
+                    reportFile: 'mclaren-570s-sf66bjo-report.html',
+                    image: 'MCLAREN-570S-ORANGE-GREY-JUL25-1-1024x576.jpg'
+                }
+            ],
+            investments: [
+                {
+                    id: 'porsche-911-gt3-g7jjo',
+                    brand: 'Porsche',
+                    model: '911 GT3',
+                    registration: 'G7JJO',
+                    price: '£149,900',
+                    profit: '£20,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£129,900',
+                    reportFile: 'porsche-911-gt3-g7jjo-report.html',
+                    image: 'PORSCHE-GT3-BLUE-JULY25-10-1024x682.jpg'
+                },
+                {
+                    id: 'aston-martin-db11-ykz322',
+                    brand: 'Aston Martin',
+                    model: 'DB11 V12',
+                    registration: 'YKZ322',
+                    price: '£67,900',
+                    profit: '£11,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£56,900',
+                    reportFile: 'aston-martin-db11-ykz322-report.html',
+                    image: 'DSC04594-Edit-2-1-1024x576.jpg'
+                },
+                {
+                    id: 'mercedes-g63-lc69jwo',
+                    brand: 'Mercedes-AMG',
+                    model: 'G63',
+                    registration: 'LC69JWO',
+                    price: '£129,900',
+                    profit: '£15,000',
+                    status: 'INVESTMENT',
+                    purchasePrice: '£114,900',
+                    reportFile: 'mercedes-g63-lc69jwo-report.html',
+                    image: '9-16-1024x689.jpg'
+                },
+                {
+                    id: 'mercedes-pagoda-fma442f',
+                    brand: 'Mercedes-Benz',
+                    model: '280 SL Pagoda',
+                    registration: 'FMA442F',
+                    price: '£69,900',
+                    profit: '£20,000',
+                    status: 'CLASSIC',
+                    purchasePrice: '£49,900',
+                    reportFile: 'mercedes-280sl-pagoda-fma442f-report.html',
+                    image: 'DSC03650-Edit-1024x576.jpeg'
+                }
+            ]
+        };
+        
+        let currentReport = '';
+        let currentVehicleName = '';
+        
+        // Create vehicle card HTML
+        function createVehicleCard(vehicle, type) {
+            const statusClass = type === 'completed' ? 'status-sold' : 'status-investment';
+            const profitLabel = type === 'completed' ? 'Profit' : 'Potential Profit';
+            
+            return `
+                <div class="vehicle-card" onclick="openReport('${vehicle.reportFile}', '${vehicle.brand} ${vehicle.model}')">
+                    <div class="card-image">
+                        <img src="${vehicle.image}" alt="${vehicle.brand} ${vehicle.model}">
+                        <span class="card-status ${statusClass}">${vehicle.status}</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-brand">${vehicle.brand}</div>
+                        <h3 class="card-model">${vehicle.model}</h3>
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <span class="detail-label">List Price</span>
+                                <span class="detail-value price">${vehicle.price}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">${profitLabel}</span>
+                                <span class="detail-value profit">${vehicle.profit}</span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-reg">${vehicle.registration}</span>
+                            <span class="view-report-btn">
+                                View Report 
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Initialize vehicle grids
+        function initializeGrids() {
+            const completedGrid = document.getElementById('completedSalesGrid');
+            const investmentGrid = document.getElementById('investmentGrid');
+            
+            // Populate completed sales
+            completedGrid.innerHTML = vehicles.completedSales
+                .map(vehicle => createVehicleCard(vehicle, 'completed'))
+                .join('');
+            
+            // Populate investments
+            investmentGrid.innerHTML = vehicles.investments
+                .map(vehicle => createVehicleCard(vehicle, 'investment'))
+                .join('');
+        }
+        
+        // Open report in modal
+        function openReport(reportFile, vehicleName) {
+            currentReport = reportFile;
+            currentVehicleName = vehicleName;
+            
+            const modal = document.getElementById('reportModal');
+            const frame = document.getElementById('reportFrame');
+            const title = document.getElementById('modalTitle');
+            
+            title.textContent = vehicleName + ' - Performance Report';
+            frame.src = reportFile;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            // Apply mobile fixes after load
+            frame.onload = function() {
+                // Apply mobile fixes for all screen sizes <= 768px
+                setTimeout(() => {
+                    if (window.innerWidth <= 768) {
+                        applyMobileFixes();
+                    }
+                }, 100);
+            };
+        }
+        
+        // Close modal
+        function closeModal() {
+            const modal = document.getElementById('reportModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Clear iframe
+            setTimeout(() => {
+                document.getElementById('reportFrame').src = '';
+            }, 300);
+        }
+        
+        // Apply mobile fixes to iframe content
+        function applyMobileFixes() {
+            const frame = document.getElementById('reportFrame');
+            const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+            
+            if (!iframeDoc) return;
+            
+            // Inject comprehensive mobile CSS
+            const mobileStyle = document.createElement('style');
+            mobileStyle.innerHTML = `
+                @media all {
+                    html, body { 
+                        overflow-x: hidden !important;
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    .container {
+                        width: 100% !important;
+                        max-width: 100vw !important;
+                        min-height: auto !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        overflow-x: hidden !important;
+                    }
+                    .header { 
+                        padding: 15px !important;
+                        flex-direction: column !important;
+                        text-align: center !important;
+                        gap: 10px !important;
+                    }
+                    .logo-section { justify-content: center !important; }
+                    .gve-logo { height: 35px !important; }
+                    .date-badge { 
+                        font-size: 11px !important;
+                        padding: 6px 15px !important;
+                    }
+                    .content-wrapper { 
+                        padding: 15px !important;
+                    }
+                    .vehicle-showcase {
+                        grid-template-columns: 1fr !important;
+                        gap: 15px !important;
+                        margin-bottom: 25px !important;
+                    }
+                    .vehicle-info { 
+                        padding-right: 0 !important;
+                        text-align: center !important;
+                    }
+                    .vehicle-title { 
+                        font-size: 22px !important;
+                        margin-bottom: 5px !important;
+                    }
+                    .vehicle-model { 
+                        font-size: 28px !important;
+                        margin-bottom: 20px !important;
+                    }
+                    .vehicle-specs-grid {
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 10px !important;
+                    }
+                    .spec-item { padding: 10px 0 !important; }
+                    .spec-label { font-size: 10px !important; }
+                    .spec-value { font-size: 16px !important; }
+                    .spec-value.price { font-size: 20px !important; }
+                    .vehicle-image { 
+                        border-radius: 10px !important;
+                        margin: 0 auto !important;
+                        max-width: 100% !important;
+                    }
+                    .vehicle-image img { 
+                        width: 100% !important;
+                        height: auto !important;
+                    }
+                    .status-badge {
+                        font-size: 11px !important;
+                        padding: 6px 15px !important;
+                    }
+                    .strategy-box {
+                        padding: 20px !important;
+                        margin-bottom: 25px !important;
+                        border-radius: 15px !important;
+                    }
+                    .strategy-header {
+                        flex-direction: column !important;
+                        gap: 15px !important;
+                        align-items: flex-start !important;
+                    }
+                    .strategy-title { font-size: 16px !important; }
+                    .strategy-content { 
+                        font-size: 14px !important;
+                        line-height: 1.6 !important;
+                    }
+                    .deal-status {
+                        font-size: 11px !important;
+                        padding: 6px 15px !important;
+                    }
+                    .metrics-row { 
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 10px !important;
+                        margin-bottom: 25px !important;
+                    }
+                    .metric-card { 
+                        padding: 20px 10px !important;
+                        border-radius: 12px !important;
+                    }
+                    .metric-icon {
+                        width: 30px !important;
+                        height: 30px !important;
+                        font-size: 16px !important;
+                        margin-bottom: 10px !important;
+                    }
+                    .metric-number { 
+                        font-size: 20px !important;
+                    }
+                    .metric-number.large { 
+                        font-size: 18px !important;
+                    }
+                    .metric-label { font-size: 10px !important; }
+                    .metric-sublabel { font-size: 9px !important; }
+                    .two-column { 
+                        grid-template-columns: 1fr !important;
+                        gap: 20px !important;
+                    }
+                    .performance-section,
+                    .insights-section {
+                        padding: 20px !important;
+                        border-radius: 15px !important;
+                    }
+                    .section-title { 
+                        font-size: 14px !important;
+                        margin-bottom: 20px !important;
+                    }
+                    .bar-label { font-size: 12px !important; }
+                    .bar-value { font-size: 14px !important; }
+                    .bar-track { height: 10px !important; }
+                    .insight-text { font-size: 12px !important; }
+                    .insight-icon {
+                        width: 20px !important;
+                        height: 20px !important;
+                        font-size: 10px !important;
+                    }
+                    .footer { 
+                        padding: 15px !important;
+                        flex-direction: column !important;
+                        text-align: center !important;
+                        gap: 10px !important;
+                    }
+                    .footer-text { font-size: 10px !important; }
+                    .confidential-badge {
+                        font-size: 10px !important;
+                        padding: 6px 15px !important;
+                    }
+                    /* Hide elements that don't work well on mobile */
+                    .metric-card::before { display: none !important; }
+                    .bar-fill::after { display: none !important; }
+                }
+            `;
+            
+            if (iframeDoc.head) {
+                iframeDoc.head.appendChild(mobileStyle);
+            }
+        }
+        
+        // Download PDF
+        async function downloadPDF() {
+            const btn = document.querySelector('.download-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; margin: 0;"></div> Generating...';
+            btn.disabled = true;
+            
+            try {
+                const pdfFrame = document.getElementById('pdfFrame');
+                pdfFrame.src = currentReport;
+                
+                await new Promise(resolve => {
+                    pdfFrame.onload = resolve;
+                    setTimeout(resolve, 2000);
+                });
+                
+                const iframeDoc = pdfFrame.contentDocument || pdfFrame.contentWindow.document;
+                const container = iframeDoc.querySelector('.container');
+                
+                if (!container) throw new Error('Report content not found');
+                
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    backgroundColor: '#0f1117',
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                });
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                
+                const date = new Date().toISOString().slice(0, 10);
+                const filename = `${currentVehicleName.replace(/\s+/g, '-').toLowerCase()}-report-${date}.pdf`;
+                
+                pdf.save(filename);
+                
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                alert('Error generating PDF. Please try again.');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+        
+        // Handle ESC key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Close modal on background click
+        document.getElementById('reportModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeGrids);
+    </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lamborghini Urus - 78 SLR | Sales Performance Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: white;
+            color: #181c24;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+            background: white;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #cd642f;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #181c24;
+        }
+        
+        .date {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .vehicle-info {
+            background: #f8f8f8;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .vehicle-title {
+            grid-column: 1 / -1;
+            font-size: 32px;
+            font-weight: bold;
+            color: #181c24;
+            margin-bottom: 10px;
+        }
+        
+        .vehicle-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .detail-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #181c24;
+        }
+        
+        .status-section {
+            background: #181c24;
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .status-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #cd642f;
+        }
+        
+        .status-content {
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #cd642f;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #181c24;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .performance-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #181c24;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #cd642f;
+        }
+        
+        .performance-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .bar-label {
+            width: 200px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .bar-container {
+            flex: 1;
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, #cd642f, #e87a4a);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .highlight-box {
+            background: #fff3e0;
+            border: 2px solid #cd642f;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .highlight-title {
+            font-weight: bold;
+            color: #cd642f;
+            margin-bottom: 10px;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+            }
+            .container {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 15mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GVE LONDON</div>
+            <div class="date">Report Date: August 10, 2025</div>
+        </div>
+        
+        <div class="vehicle-info">
+            <div class="vehicle-title">LAMBORGHINI URUS</div>
+            <div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">Registration</span>
+                    <span class="detail-value">78 SLR</span>
+                </div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">List Price</span>
+                    <span class="detail-value">£179,900</span>
+                </div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">Mileage</span>
+                    <span class="detail-value">8,437 miles</span>
+                </div>
+            </div>
+            <div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">Colour</span>
+                    <span class="detail-value">Nero Helene</span>
+                </div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">Year</span>
+                    <span class="detail-value">2022</span>
+                </div>
+                <div class="vehicle-detail">
+                    <span class="detail-label">Days in Stock</span>
+                    <span class="detail-value">187 days</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <div class="status-title">CURRENT SALES STATUS</div>
+            <div class="status-content">
+                <strong style="color: #4CAF50;">✓ SOLD - AWAITING PAYMENT</strong><br>
+                Deal has been agreed and we are currently waiting for the payout to complete the transaction.
+            </div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value">13,475</div>
+                <div class="metric-label">Weekly Search Views</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">473</div>
+                <div class="metric-label">Weekly Ad Views</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">76</div>
+                <div class="metric-label">Performance Score</div>
+            </div>
+        </div>
+        
+        <div class="performance-section">
+            <div class="section-title">Market Performance Analysis</div>
+            <div class="performance-bars">
+                <div class="bar-item">
+                    <div class="bar-label">Search Visibility</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 85%;">Excellent</div>
+                    </div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-label">Engagement Rate</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 76%;">Above Average</div>
+                    </div>
+                </div>
+                <div class="bar-item">
+                    <div class="bar-label">Price Positioning</div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 90%;">Competitive</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="highlight-box">
+            <div class="highlight-title">Key Highlights</div>
+            <ul style="margin-left: 20px; color: #666;">
+                <li>Strong market interest with 13,475 searches in the last 7 days</li>
+                <li>Excellent performance rating of 76/100 on Autotrader</li>
+                <li>Premium specification Nero Helene with low mileage</li>
+                <li>Transaction agreed - awaiting final payment completion</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>GVE London Ltd | Luxury & Performance Vehicles</p>
+            <p>This report is confidential and prepared exclusively for Kunal</p>
+        </div>
+    </div>
+</body>
+</html>
